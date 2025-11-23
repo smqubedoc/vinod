@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "182835474417",
+    "project_id": "servicedesk-ba425",
+    "storage_bucket": "servicedesk-ba425.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:182835474417:android:9c79f3bdee5efc070bde50",
+        "android_client_info": {
+          "package_name": "com.example.complaint_staff_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0eLGpEhZ9Y-D319Bur1iR62GJIlAGKxg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
