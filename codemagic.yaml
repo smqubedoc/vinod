@@ -1,42 +1,26 @@
 workflows:
-  ios-workflow:
-    name: iOS Release Build
+  ios-simulator-build:
+    name: iOS Simulator Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.molyhomestay.serviceapp
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        APP_STORE_CONNECT_ISSUER_ID: YOUR_ISSUER_ID
-        APP_STORE_CONNECT_KEY_IDENTIFIER: YOUR_KEY_ID
-        APP_STORE_CONNECT_PRIVATE_KEY: YOUR_PRIVATE_KEY
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: | 
-          xcode-project use-profiles
       - name: Get Flutter packages
-        script: | 
-          flutter packages pub get
-      - name: Install pods
-        script: | 
-          find . -name "Podfile" -execdir pod install \;
-      - name: Flutter build ipa
-        script: | 
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+        script: |
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Build for iOS Simulator
+        script: |
+          flutter build ios --debug --simulator --no-codesign
     artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
+      - build/ios/iphonesimulator/*.app
       - flutter_drive.log
     publishing:
       email:
         recipients:
-          - your-email@example.com
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+          - smqubedoc@gmail.com
