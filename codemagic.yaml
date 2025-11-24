@@ -11,10 +11,11 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
-      - name: Regenerate iOS files
+      - name: Delete and regenerate iOS folder
         script: |
-          rm -rf ios/Podfile ios/Podfile.lock ios/Pods
+          rm -rf ios
           flutter create --platforms=ios .
+          flutter pub get
       - name: Install CocoaPods
         script: |
           cd ios && pod install
