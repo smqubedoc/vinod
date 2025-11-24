@@ -1,4 +1,4 @@
-# Uncomment this line to define a global platform for your project
+# ios/Podfile (fixed — single post_install, defensive and safe)
 platform :ios, '12.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
@@ -7,7 +7,7 @@ ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
-  'Release' => :release,
+  'Release' => :release
 }
 
 def flutter_root
@@ -26,53 +26,57 @@ end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 target 'Runner' do
-  # If you do not need frameworks/modular headers, you can remove these lines.
-  # Some plugins require them; keep only if necessary.
-  use_frameworks!
-  use_modular_headers!
+  # Re-enable these only if a plugin requires them:
+  # use_frameworks!
+  # use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
-# -------------------------
-# SINGLE post_install block
-# -------------------------
-# CocoaPods does not support multiple post_install blocks in the same Podfile.
-# This single block will:
-# 1) call flutter_post_install(installer) if it's defined by podhelper,
-# 2) apply flutter_additional_ios_build_settings per target,
-# 3) perform your custom xcconfig replacement safely.
+# ============================================================
+# SINGLE post_install block (CocoaPods forbids multiple hooks)
+# - Calls flutter_post_install once if present
+# - Applies flutter_additional_ios_build_settings once per target
+# - Preserves your custom xcconfig modification safely
+# ============================================================
 post_install do |installer|
-  # If podhelper defines flutter_post_install (some flutter versions do), call it first.
+  # 1) Call Flutter helper if defined (some versions define flutter_post_install in podhelper)
   if defined?(flutter_post_install)
-    flutter_post_install(installer)
+    begin
+      flutter_post_install(installer)
+    rescue => e
+      puts "Warning: flutter_post_install raised: #{e}"
+    end
   end
 
-  # For each target, apply additional flutter build settings and any custom fixes.
+  # 2) Iterate targets and apply merged settings
   installer.pods_project.targets.each do |target|
-    # Apply Flutter's additional iOS build settings helper if available
+    # Apply flutter_additional_ios_build_settings if the helper exists
     if defined?(flutter_additional_ios_build_settings)
-      flutter_additional_ios_build_settings(target)
+      begin
+        flutter_additional_ios_build_settings(target)
+      rescue => e
+        puts "Warning: flutter_additional_ios_build_settings failed for #{target.name}: #{e}"
+      end
     end
 
+    # Apply your original per-target build settings and safe xcconfig edits
     target.build_configurations.each do |config|
-      # Allow non-modular includes (only if needed by some plugin)
-      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-
-      # If config has a base_configuration_reference, perform the DT_TOOLCHAIN_DIR -> TOOLCHAIN_DIR substitution
-      # This is a safe replacement used sometimes for Xcode/CI compatibility.
       begin
+        # Keep the original setting you had
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+
+        # Safe xcconfig replacement (DT_TOOLCHAIN_DIR -> TOOLCHAIN_DIR)
         if config.respond_to?(:base_configuration_reference) && config.base_configuration_reference
           xcconfig_path = config.base_configuration_reference.real_path
           if File.exist?(xcconfig_path)
             xcconfig = File.read(xcconfig_path)
-            xcconfig_mod = xcconfig.gsub(/DT_TOOLCHAIN_DIR/, "TOOLCHAIN_DIR")
-            File.open(xcconfig_path, "w") { |file| file << xcconfig_mod }
+            xcconfig_mod = xcconfig.gsub(/DT_TOOLCHAIN_DIR/, 'TOOLCHAIN_DIR')
+            File.open(xcconfig_path, 'w') { |file| file << xcconfig_mod }
           end
         end
       rescue => e
-        # Do not fail the pod install for a substitution error — log to stdout for CI debugging.
-        puts "Warning: could not modify xcconfig: #{e}"
+        puts "Warning: error applying build settings for #{target.name} (#{config.name}): #{e}"
       end
     end
   end
