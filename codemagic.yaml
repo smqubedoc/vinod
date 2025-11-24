@@ -1,5 +1,5 @@
 workflows:
-  ios-simulator-build:
+  ios-workflow:
     name: iOS Simulator Build
     max_build_duration: 60
     instance_type: mac_mini_m1
@@ -19,7 +19,6 @@ workflows:
           flutter build ios --debug --simulator --no-codesign
     artifacts:
       - build/ios/iphonesimulator/*.app
-      - flutter_drive.log
     publishing:
       email:
         recipients:
