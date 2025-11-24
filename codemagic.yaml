@@ -11,28 +11,6 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
-      - name: Delete and regenerate iOS folder
-        script: |
-          rm -rf ios
-          flutter create --platforms=ios .
-          flutter pub get
-      - name: Fix Podfile for Firebase
-        script: |
-          cd ios
-          echo "platform :ios, '13.0'" > Podfile.tmp
-          tail -n +2 Podfile >> Podfile.tmp
-          mv Podfile.tmp Podfile
-          cat << 'EOF' >> Podfile
-          
-          post_install do |installer|
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-                config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-              end
-            end
-          end
-          EOF
       - name: Install CocoaPods
         script: |
           cd ios && pod install
