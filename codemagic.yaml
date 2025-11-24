@@ -11,6 +11,18 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
+      - name: Delete and regenerate iOS folder
+        script: |
+          rm -rf ios
+          flutter create --platforms=ios .
+          flutter pub get
+      - name: Update iOS platform and add Firebase fix
+        script: |
+          cd ios
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" Podfile
+          sed -i '' "/flutter_additional_ios_build_settings(target)/a\\
+                config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          " Podfile
       - name: Install CocoaPods
         script: |
           cd ios && pod install
